@@ -1,5 +1,6 @@
 package fu.example.bradford.rxtimeoutproguard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -41,6 +42,14 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.v(TAG, "Timeout button clicked");
                 mEvents.onNext(Event.CLICKED);
+            }
+        });
+
+        findViewById(R.id.timer_activity_start).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(v.getContext(), TimerActivity.class);
+                startActivity(intent);
             }
         });
         mEvents.onNext(Event.INITIAL);
