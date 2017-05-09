@@ -11,24 +11,27 @@ import android.widget.TextView;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
-import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import rx.subjects.BehaviorSubject;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
-    private enum Event {
-        INITIAL,
-        CLICKED
-    }
-
+    private final BehaviorSubject<Event> mEvents = BehaviorSubject.create();
     private Subscription mSubscriber;
     private TextView mTextView;
 
-    private BehaviorSubject<Event> mEvents = BehaviorSubject.create();
+    public static Observable<Long> timer(Event event) {
+        if (event == Event.CLICKED) {
+            Log.v(TAG, "Returning never observable");
+            return Observable.never();
+        }
+        Log.v(TAG, "Returning cached timer observable");
+        return Observable.timer(2, TimeUnit.SECONDS).cache();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,38 +74,29 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Event>() {
-                    @Override
-                    public void onCompleted() {
-                        Log.i(TAG, "onCompleted");
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.e(TAG, "onError", e);
-                        mTextView.setText("I assume we timed out!! "+e.getClass().getSimpleName());
-                    }
-
-                    @Override
-                    public void onNext(Event event) {
-                        Log.i(TAG, "onNext: "+event);
-                        mTextView.setText(event.toString());
-                    }
-                });
-    }
-
-    public static Observable<Long> timer(Event event) {
-        if (event == Event.CLICKED) {
-            Log.v(TAG, "Returning never observable");
-            return Observable.never();
-        }
-        Log.v(TAG, "Returning cached timer observable");
-        return Observable.timer(2, TimeUnit.SECONDS).cache();
+                .subscribe(new Action1<Event>() {
+                               @Override
+                               public void call(Event event) {
+                                    Log.i(TAG, "onNext: "+event);
+                                    mTextView.setText(event.toString());
+                               }
+                           }, new Action1<Throwable>() {
+                               @Override
+                               public void call(Throwable throwable) {
+                                    Log.e(TAG, "onError", throwable);
+                                    mTextView.setText("I assume we timed out!! "+throwable.getClass().getSimpleName());
+                               }
+                           });
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         mSubscriber.unsubscribe();
+    }
+
+    private enum Event {
+        INITIAL,
+        CLICKED
     }
 }

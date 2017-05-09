@@ -1,11 +1,10 @@
 # TODO (davidburstrom): At 2017-03-08, it took 70 seconds for pass 5 to get rid of 5.5k APK.
 # The relevant tuning needs to be investigated with Marvin and Perf
--optimizationpasses 4
+-optimizationpasses 1
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 -dontpreverify
 -repackageclasses
-#-dontobfuscate
 
 # This is specified by the AndroidProGuardTask
 # -printusage
