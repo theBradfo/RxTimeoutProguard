@@ -24,15 +24,6 @@ public class MainActivity extends AppCompatActivity {
     private Subscription mSubscriber;
     private TextView mTextView;
 
-    public static Observable<Long> timer(Event event) {
-        if (event == Event.CLICKED) {
-            Log.v(TAG, "Returning never observable");
-            return Observable.never();
-        }
-        Log.v(TAG, "Returning cached timer observable");
-        return Observable.timer(2, TimeUnit.SECONDS).cache();
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "creating subscriber for timer");
         mSubscriber =
                 mEvents
+                // this emits a Timeout exception as expected (I forked the internal source), however our
+                //  subscriber's onNext is not invoked with this event when proguarded.
                 .timeout(null, new Func1<Event, Observable<Long>>() {
                     @Override
                     public Observable<Long> call(Event eventname) {
@@ -87,6 +80,18 @@ public class MainActivity extends AppCompatActivity {
                                     mTextView.setText("I assume we timed out!! "+throwable.getClass().getSimpleName());
                                }
                            });
+    }
+
+    public static Observable<Long> timer(Event event) {
+        // if the event is CLICKED (i.e. ui button has been pressed), never timeout
+        if (event == Event.CLICKED) {
+            Log.v(TAG, "Returning never observable");
+            return Observable.never();
+        }
+
+        // otherwise emit a cached timer observable
+        Log.v(TAG, "Returning cached timer observable");
+        return Observable.timer(2, TimeUnit.SECONDS).cache();
     }
 
     @Override
